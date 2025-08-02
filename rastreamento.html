@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreamento de Ônibus</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        .tempo-chegada {
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            color: #2196F3;
+            margin: 20px 0;
+        }
+        .info {
+            margin: 10px 0;
+            font-size: 1.1em;
+            color: #555;
+        }
+        .btn-atualizar {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-atualizar:hover {
+            background: #45a049;
+        }
+        #mapa {
+            height: 300px;
+            width: 100%;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 Rastreamento de Ônibus</h1>
+        
+        <div class="info-card">
+            <h2>Ponto de Ônibus - Centro</h2>
+            <div class="tempo-chegada">
+                <span id="minutos">5</span> minutos
+            </div>
+            <div class="info">
+                Chegada prevista: <span id="horario">14:25</span>
+            </div>
+            <div class="info">
+                Linha: <span id="linha">101 - Centro/Bairro</span>
+            </div>
+            <div class="info">
+                Status: <span id="status">Em movimento</span>
+            </div>
+            <div class="info">
+                📍 Sua localização: <span id="localizacao">Obtendo...</span>
+            </div>
+            <div class="info">
+                🚌 Distância do ônibus: <span id="distancia">--</span>m
+            </div>
+            
+            <div id="mapa"></div>
+            
+            <button onclick="atualizarTempo()" class="btn-atualizar">
+                🔄 Atualizar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let minhaLocalizacao = null;
+        let mapa = null;
+        let marcadorUsuario = null;
+        let marcadorOnibus = null;
+        
+        function obterLocalizacao() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        minhaLocalizacao = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        document.getElementById('localizacao').textContent = 
+                            `${minhaLocalizacao.lat.toFixed(4)}, ${minhaLocalizacao.lng.toFixed(4)}`;
+                        inicializarMapa();
+                        atualizarTempo();
+                    },
+                    function(error) {
+                        document.getElementById('localizacao').textContent = 'Não autorizada';
+                    }
+                );
+            } else {
+                document.getElementById('localizacao').textContent = 'Não suportada';
+            }
+        }
+        
+        function calcularDistancia(lat1, lng1, lat2, lng2) {
+            const R = 6371000; // Raio da Terra em metros
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function atualizarTempo() {
+            const minutos = Math.floor(Math.random() * 13) + 2;
+            const agora = new Date();
+            agora.setMinutes(agora.getMinutes() + minutos);
+            
+            document.getElementById('minutos').textContent = minutos;
+            document.getElementById('horario').textContent = 
+                agora.getHours().toString().padStart(2, '0') + ':' + 
+                agora.getMinutes().toString().padStart(2, '0');
+            
+            // Simula posição do ônibus próxima à sua localização
+            if (minhaLocalizacao) {
+                const onibusLat = minhaLocalizacao.lat + (Math.random() - 0.5) * 0.01;
+                const onibusLng = minhaLocalizacao.lng + (Math.random() - 0.5) * 0.01;
+                const distancia = calcularDistancia(
+                    minhaLocalizacao.lat, minhaLocalizacao.lng,
+                    onibusLat, onibusLng
+                );
+                document.getElementById('distancia').textContent = Math.round(distancia);
+                atualizarMapa(onibusLat, onibusLng);
+            }
+        }
+        
+        function inicializarMapa() {
+            mapa = L.map('mapa').setView([minhaLocalizacao.lat, minhaLocalizacao.lng], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(mapa);
+            
+            // Marcador do usuário
+            marcadorUsuario = L.marker([minhaLocalizacao.lat, minhaLocalizacao.lng])
+                .addTo(mapa)
+                .bindPopup('📍 Você está aqui')
+                .openPopup();
+        }
+        
+        function atualizarMapa(onibusLat, onibusLng) {
+            if (!mapa) return;
+            
+            // Remove marcador anterior do ônibus
+            if (marcadorOnibus) {
+                mapa.removeLayer(marcadorOnibus);
+            }
+            
+            // Adiciona novo marcador do ônibus
+            marcadorOnibus = L.marker([onibusLat, onibusLng], {
+                icon: L.divIcon({
+                    html: '🚌',
+                    iconSize: [30, 30],
+                    className: 'emoji-icon'
+                })
+            }).addTo(mapa).bindPopup('🚌 Ônibus Linha 101');
+            
+            // Ajusta zoom para mostrar ambos os marcadores
+            const grupo = L.featureGroup([marcadorUsuario, marcadorOnibus]);
+            mapa.fitBounds(grupo.getBounds().pad(0.1));
+        }
+
+        // Solicita localização ao carregar
+        obterLocalizacao();
+        setInterval(atualizarTempo, 30000);
+        
+        // CSS para ícone emoji
+        const style = document.createElement('style');
+        style.textContent = '.emoji-icon { background: none; border: none; font-size: 20px; }';
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

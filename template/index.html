@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreamento de Ônibus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 Rastreamento de Ônibus</h1>
+        
+        <div class="info-card">
+            <h2>Ponto de Ônibus - Centro</h2>
+            <div id="tempo-info">
+                <div class="tempo-chegada">
+                    <span id="minutos">--</span> minutos
+                </div>
+                <div class="horario">
+                    Chegada prevista: <span id="horario">--:--</span>
+                </div>
+                <div class="linha">
+                    Linha: <span id="linha">--</span>
+                </div>
+                <div class="status">
+                    Status: <span id="status">--</span>
+                </div>
+            </div>
+            
+            <button onclick="atualizarTempo()" class="btn-atualizar">
+                🔄 Atualizar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function atualizarTempo() {
+            fetch('/api/tempo-chegada')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('minutos').textContent = data.tempo_minutos;
+                    document.getElementById('horario').textContent = data.horario_chegada;
+                    document.getElementById('linha').textContent = data.linha;
+                    document.getElementById('status').textContent = data.status;
+                });
+        }
+
+        // Atualiza automaticamente a cada 30 segundos
+        setInterval(atualizarTempo, 30000);
+        
+        // Carrega dados iniciais
+        atualizarTempo();
+    </script>
+</body>
+</html>

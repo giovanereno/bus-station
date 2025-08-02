@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastreamento de Ônibus</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 Rastreamento de Ônibus</h1>
+        
+        <div class="info-card">
+            <h2>Ponto de Ônibus - Centro</h2>
+            <div class="tempo-chegada">
+                <span id="minutos">--</span> minutos
+            </div>
+            <div class="info">
+                Chegada prevista: <span id="horario">--:--</span>
+            </div>
+            <div class="info">
+                Linha: <span id="linha">101 - Centro/Bairro</span>
+            </div>
+            <div class="info">
+                Status: <span id="status">Em movimento</span>
+            </div>
+            <div class="info">
+                📍 Sua localização: <span id="localizacao">Obtendo...</span>
+            </div>
+            <div class="info">
+                🚌 Distância do ônibus: <span id="distancia">--</span>m
+            </div>
+            
+            <div id="mapa"></div>
+            
+            <button onclick="location.reload()" class="btn-atualizar">
+                🔄 Atualizar
+            </button>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="bus-tracker.js"></script>
+    <style>
+        .emoji-icon { 
+            background: none; 
+            border: none; 
+            font-size: 20px; 
+        }
+    </style>
+</body>
+</html>
